@@ -1,6 +1,6 @@
 /*
 	Little Anti-Cheat
-	Copyright (C) 2018-2023 J_Tanzanite
+	Copyright (C) 2018-2024 J_Tanzanite
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -15,14 +15,6 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-
-/* Uncomment below line to compile for Team Fortress 2 Classic.
- * You'll need SourceMod 1.10 and SM-TF2Clasic-Tools to compile, if you decide to.
- * Note: Doing so means the compiled plugin won't work correctly
- * for other source games. 
- * SourceMod 1.10: https://www.sourcemod.net/downloads.php?branch=1.10-dev
- * SM-TF2Clasic-Tools: https://github.com/tf2classic/SM-TF2Classic-Tools */
-//#define TF2C
 
 #include <sourcemod>
 #include <sdktools_engine>
@@ -59,16 +51,14 @@
 #include "lilac/lilac_ping.sp"
 #include "lilac/lilac_stock.sp"
 #include "lilac/lilac_string.sp" /* String takes care of chat and names. */
-
-
-public Plugin myinfo = {
-	name = PLUGIN_NAME,
-	author = PLUGIN_AUTHOR,
+public Plugin myinfo =
+{
+	name		= PLUGIN_NAME,
+	author		= PLUGIN_AUTHOR,
 	description = PLUGIN_DESC,
-	version = PLUGIN_VERSION,
-	url = PLUGIN_URL
+	version		= PLUGIN_VERSION,
+	url			= PLUGIN_URL
 };
-
 
 public void OnPluginStart()
 {
@@ -83,7 +73,8 @@ public void OnPluginStart()
 #else
 	char gamefolder[32];
 	GetGameFolderName(gamefolder, sizeof(gamefolder));
-	if (StrEqual(gamefolder, "tf", false)) {
+	if (StrEqual(gamefolder, "tf", false))
+	{
 		ggame = GAME_TF2;
 
 		HookEvent("post_inventory_application", event_inventoryupdate, EventHookMode_Post);
@@ -96,7 +87,8 @@ public void OnPluginStart()
 		ConVar tvar;
 		ggame = GAME_CSGO;
 
-		if ((tvar = FindConVar("sv_autobunnyhopping")) != null) {
+		if ((tvar = FindConVar("sv_autobunnyhopping")) != null)
+		{
 			force_disable_bhop = tvar.IntValue;
 			tvar.AddChangeHook(cvar_change);
 		}
@@ -138,7 +130,7 @@ public void OnPluginStart()
 		ban_length_overwrite[i] = -1;
 
 	/* Bans for Bhop last 1 month by default. */
-	ban_length_overwrite[CHEAT_BHOP] = 24 * 30 * 60;
+	ban_length_overwrite[CHEAT_BHOP]  = 24 * 30 * 60;
 
 	/* Bans for Macros are 15 minutes by default. */
 	ban_length_overwrite[CHEAT_MACRO] = 15;
@@ -147,7 +139,8 @@ public void OnPluginStart()
 	 * is loaded, then it could lead to false positives.
 	 * Reset all stats on all players already in-game, but ignore lerp.
 	 * Also check players already in-game for noisemaker. */
-	for (int i = 1; i <= MaxClients; i++) {
+	for (int i = 1; i <= MaxClients; i++)
+	{
 		lilac_reset_client(i);
 		lilac_lerp_ignore_nolerp_client(i);
 #if !defined TF2C
@@ -155,12 +148,12 @@ public void OnPluginStart()
 #endif
 	}
 
-	forwardhandle = CreateGlobalForward("lilac_cheater_detected",
-		ET_Ignore, Param_Cell, Param_Cell);
-	forwardhandleban = CreateGlobalForward("lilac_cheater_banned",
-		ET_Ignore, Param_Cell, Param_Cell);
+	forwardhandle	   = CreateGlobalForward("lilac_cheater_detected",
+											 ET_Ignore, Param_Cell, Param_Cell);
+	forwardhandleban   = CreateGlobalForward("lilac_cheater_banned",
+											 ET_Ignore, Param_Cell, Param_Cell);
 	forwardhandleallow = CreateGlobalForward("lilac_allow_cheat_detection",
-		ET_Event, Param_Cell, Param_Cell);
+											 ET_Event, Param_Cell, Param_Cell);
 
 	CreateTimer(QUERY_TIMER, timer_query, _, TIMER_REPEAT);
 	CreateTimer(5.0, timer_check_ping, _, TIMER_REPEAT);
@@ -173,18 +166,19 @@ public void OnPluginStart()
 	/* Ignore low tickrates. */
 	macro_max = (tick_rate >= 60 && tick_rate <= MACRO_LOG_LENGTH) ? 20 : 0;
 
-	if (tick_rate > 50) {
-		bhop_settings_min[BHOP_INDEX_MIN] = 5;
-		bhop_settings_min[BHOP_INDEX_MAX] = 10;
+	if (tick_rate > 50)
+	{
+		bhop_settings_min[BHOP_INDEX_MIN]	= 5;
+		bhop_settings_min[BHOP_INDEX_MAX]	= 10;
 		bhop_settings_min[BHOP_INDEX_TOTAL] = 1;
 	}
 	else {
-		bhop_settings_min[BHOP_INDEX_MIN] = 10;
-		bhop_settings_min[BHOP_INDEX_MAX] = 20;
+		bhop_settings_min[BHOP_INDEX_MIN]	= 10;
+		bhop_settings_min[BHOP_INDEX_MAX]	= 20;
 		bhop_settings_min[BHOP_INDEX_TOTAL] = 3;
 	}
 	bhop_settings_min[BHOP_INDEX_JUMP] = -1;
-	bhop_settings_min[BHOP_INDEX_AIR] = 0;
+	bhop_settings_min[BHOP_INDEX_AIR]  = 0;
 
 	/* This sets up convars and such. */
 	lilac_config_setup();
@@ -195,8 +189,8 @@ public void OnPluginStart()
 
 public void OnAllPluginsLoaded()
 {
-	sourcebanspp_exist = LibraryExists("sourcebans++");
-	sourcebans_exist = LibraryExists("sourcebans");
+	sourcebanspp_exist	= LibraryExists("sourcebans++");
+	sourcebans_exist	= LibraryExists("sourcebans");
 	materialadmin_exist = LibraryExists("materialadmin");
 
 	if (LibraryExists("updater"))
@@ -221,7 +215,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int err_
 	return APLRes_Success;
 }
 
-public void OnLibraryAdded(const char []name)
+public void OnLibraryAdded(const char[] name)
 {
 	if (StrEqual(name, "sourcebans++"))
 		sourcebanspp_exist = true;
@@ -233,7 +227,7 @@ public void OnLibraryAdded(const char []name)
 		lilac_update_url();
 }
 
-public void OnLibraryRemoved(const char []name)
+public void OnLibraryRemoved(const char[] name)
 {
 	if (StrEqual(name, "sourcebans++"))
 		sourcebanspp_exist = false;
@@ -245,8 +239,10 @@ public void OnLibraryRemoved(const char []name)
 
 void lilac_update_url()
 {
-	if (icvar[CVAR_AUTO_UPDATE]) {
-		if (!NATIVE_EXISTS("Updater_AddPlugin")) {
+	if (icvar[CVAR_AUTO_UPDATE])
+	{
+		if (!NATIVE_EXISTS("Updater_AddPlugin"))
+		{
 			PrintToServer("Error: Native Updater_AddPlugin() not found! Check if updater plugin is installed.");
 			return;
 		}
@@ -254,7 +250,8 @@ void lilac_update_url()
 		Updater_AddPlugin(UPDATE_URL);
 	}
 	else {
-		if (!NATIVE_EXISTS("Updater_RemovePlugin")) {
+		if (!NATIVE_EXISTS("Updater_RemovePlugin"))
+		{
 			PrintToServer("Error: Native Updater_RemovePlugin() not found! Check if updater plugin is installed.");
 			return;
 		}
@@ -311,8 +308,8 @@ public Action timer_welcome(Handle timer, int userid)
 }
 
 public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3],
-				float angles[3], int& weapon, int& subtype, int& cmdnum,
-				int& tickcount, int& seed, int mouse[2])
+					  float angles[3], int& weapon, int& subtype, int& cmdnum,
+					  int& tickcount, int& seed, int mouse[2])
 {
 	static int lbuttons[MAXPLAYERS + 1];
 
@@ -335,7 +332,8 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 	if ((buttons & IN_ATTACK) && bullettime_can_shoot(client))
 		playerinfo_actions[client][playerinfo_index[client]] |= ACTION_SHOT;
 
-	if (icvar[CVAR_ENABLE]) {
+	if (icvar[CVAR_ENABLE])
+	{
 #if !defined TF2C
 		/* Detect Anti-Duck-Delay. */
 		if (ggame == GAME_CSGO && icvar[CVAR_ANTI_DUCK_DELAY])
